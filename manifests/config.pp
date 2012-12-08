@@ -140,10 +140,4 @@ class mysql::config(
       mode    => '0644',
     }
   }
-
-  File['/etc/mysql'] -> File['/etc/mysql/conf.d']
-
-  if $manage_config_file and $config_file =~ /^\/etc\/mysql\// {
-    File['/etc/mysql'] -> File[$config_file]
-  }
 }
