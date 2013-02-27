@@ -2,23 +2,24 @@
 #
 # Parameters:
 #
-#   [*root_password*]     - root user password.
-#   [*old_root_password*] - previous root user password,
-#   [*bind_address*]      - address to bind service.
-#   [*port*]              - port to bind service.
-#   [*etc_root_password*] - whether to save /etc/my.cnf.
-#   [*service_name*]      - mysql service name.
-#   [*config_file*]       - my.cnf configuration file path.
-#   [*socket*]            - mysql socket.
-#   [*datadir*]           - path to datadir.
-#   [*ssl]                - enable ssl
-#   [*ssl_ca]             - path to ssl-ca
-#   [*ssl_cert]           - path to ssl-cert
-#   [*ssl_key]            - path to ssl-key
-#   [*log_error]          - path to mysql error log
-#   [*default_engine]     - configure a default table engine
-#   [*root_group]         - use specified group for root-owned files
-#   [*restart]            - whether to restart mysqld (true/false)
+#   [*root_password*]      - root user password.
+#   [*old_root_password*]  - previous root user password,
+#   [*bind_address*]       - address to bind service.
+#   [*port*]               - port to bind service.
+#   [*etc_root_password*]  - whether to save /etc/my.cnf.
+#   [*service_name*]       - mysql service name.
+#   [*manage_config_file*] - if the config file should be managed (default: true)
+#   [*config_file*]        - my.cnf configuration file path.
+#   [*socket*]             - mysql socket.
+#   [*datadir*]            - path to datadir.
+#   [*ssl]                 - enable ssl
+#   [*ssl_ca]              - path to ssl-ca
+#   [*ssl_cert]            - path to ssl-cert
+#   [*ssl_key]             - path to ssl-key
+#   [*log_error]           - path to mysql error log
+#   [*default_engine]      - configure a default table engine
+#   [*root_group]          - use specified group for root-owned files
+#   [*restart]             - whether to restart mysqld (true/false)
 #
 # Actions:
 #
@@ -34,25 +35,25 @@
 #   }
 #
 class mysql::config(
-  $root_password     = 'UNSET',
-  $old_root_password = '',
-  $bind_address      = $mysql::params::bind_address,
-  $port              = $mysql::params::port,
-  $etc_root_password = $mysql::params::etc_root_password,
-  $service_name      = $mysql::params::service_name,
-  $config_file       = $mysql::params::config_file,
-  $socket            = $mysql::params::socket,
-  $pidfile           = $mysql::params::pidfile,
-  $datadir           = $mysql::params::datadir,
-  $ssl               = $mysql::params::ssl,
-  $ssl_ca            = $mysql::params::ssl_ca,
-  $ssl_cert          = $mysql::params::ssl_cert,
-  $ssl_key           = $mysql::params::ssl_key,
-  $log_error         = $mysql::params::log_error,
-  $default_engine    = 'UNSET',
-  $root_group        = $mysql::params::root_group,
-  $restart           = $mysql::params::restart,
-  $purge_conf_dir    = false
+  $root_password      = 'UNSET',
+  $old_root_password  = '',
+  $bind_address       = $mysql::params::bind_address,
+  $port               = $mysql::params::port,
+  $etc_root_password  = $mysql::params::etc_root_password,
+  $service_name       = $mysql::params::service_name,
+  $manage_config_file = true,
+  $config_file        = $mysql::params::config_file,
+  $socket             = $mysql::params::socket,
+  $pidfile            = $mysql::params::pidfile,
+  $datadir            = $mysql::params::datadir,
+  $ssl                = $mysql::params::ssl,
+  $ssl_ca             = $mysql::params::ssl_ca,
+  $ssl_cert           = $mysql::params::ssl_cert,
+  $ssl_key            = $mysql::params::ssl_key,
+  $log_error          = $mysql::params::log_error,
+  $default_engine     = 'UNSET',
+  $root_group         = $mysql::params::root_group,
+  $restart            = $mysql::params::restart
 ) inherits mysql::params {
 
   File {
@@ -100,7 +101,7 @@ class mysql::config(
       unless    => "mysqladmin -u root -p'${root_password}' status > /dev/null",
       path      => '/usr/local/sbin:/usr/bin:/usr/local/bin',
       notify    => $restart ? {
-        true => Exec['mysqld-restart'],
+        true  => Exec['mysqld-restart'],
         false => undef,
       },
       require   => File['/etc/mysql/conf.d'],
@@ -127,15 +128,18 @@ class mysql::config(
     ensure => directory,
     mode   => '0755',
   }
+
   file { '/etc/mysql/conf.d':
     ensure  => directory,
     mode    => '0755',
     recurse => $purge_conf_dir,
     purge   => $purge_conf_dir,
   }
-  file { $config_file:
-    content => template('mysql/my.cnf.erb'),
-    mode    => '0644',
-  }
 
+  if $manage_config_file  {
+    file { $config_file:
+      content => template('mysql/my.cnf.erb'),
+      mode    => '0644',
+    }
+  }
 }
